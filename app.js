@@ -9,131 +9,122 @@ GAME RULES:
 
 */
 
-    const CONSTS = {
+    const CONSTANTS = {
         CLASSES: {
-            active: '.active',
-            btnHold: '.btn-hold',
-            btnNew: '.btn-new',
-            btnRoll: '.btn-roll',
-            dice: '.dice',
-            playerCurrentScore: '.player-current-score',
-            playerName: '.player-name',
-            playerScore: '.player-score',
-            winner: '.winner'
+            ACTIVE: '.active',
+            BTN_HOLD: '.btn-hold',
+            BTN_NEW: '.btn-new',
+            BTN_ROLL: '.btn-roll',
+            DICE: '.dice',
+            PLAYER_CERO_PANEL: '.player-0-panel',
+            PLAYER_CURRENT_SCORE: '.player-current-score',
+            PLAYER_SCORE: '.player-score',
+            WINNER: '.winner'
         },
         EVENTS: {
-            click: 'click'
+            CLICK: 'click'
         },
         PARAMS: {
-            active: 'active',
-            numberIdOnClass: 7,
-            startingPlayer: 0,
-            winner: 'winner'
+            ACTIVE: 'active',
+            SIDE_ONE: 1,
+            TARGET_SCORE: 20,
+            WINNER: 'winner'
         },
         STYLES: {
-            block: 'block',
-            none: 'none'
+            BLOCK: 'block',
+            NONE: 'none'
         }
-    };
+    }
 
-    let acumulatedRollingScore,
-        idPlayerRolling,
+    let currentAcumulated,
+        die,
+        idCurrentPlayer,
         totalAcumulated;
 
-    //functions
-    function acumulateScore(val, id) {
-        acumulatedRollingScore += val;
-        document.querySelector(`#current-${id}`).textContent = acumulatedRollingScore;
+    die = document.querySelector(CONSTANTS.CLASSES.DICE);
+
+    function hideDie() {
+        die.style.display = CONSTANTS.STYLES.NONE;
     }
 
-    function changePlayer(id) {
-        acumulatedRollingScore = 0;
-        document.querySelector(`#current-${id}`).textContent = acumulatedRollingScore;
-        document.querySelector(`.player-${id}-panel`).classList.toggle(CONSTS.PARAMS.active);
-        idPlayerRolling = changePlayerId(id);
-        document.querySelector(`.player-${idPlayerRolling}-panel`).classList.toggle(CONSTS.PARAMS.active);
-    }
-    
-    function changePlayerId(id) {
-        return id === '0' ? '1' : '0';
-    }
+    function hold() {
+        totalAcumulated[idCurrentPlayer] += currentAcumulated;
 
-    function getIdActivePanel(player) {
-        return player.classList[CONSTS.PARAMS.startingPlayer][CONSTS.PARAMS.numberIdOnClass];
-    }
+        document.querySelector(`#score-${idCurrentPlayer}`).textContent = totalAcumulated[idCurrentPlayer];
 
-    function getPlayerActive() {
-        return document.querySelector(CONSTS.CLASSES.active);
-    }
-    
-    function newGame() {
-        let idWinner;
-
-        if (document.querySelector(CONSTS.CLASSES.winner)) {
-            idWinner = document.querySelector('.winner .player-name').id.split('-')[1];
-            document.querySelector(`#name-${idWinner}`).textContent = `player ${parseInt(idWinner) + 1}`;
-            document.querySelector(CONSTS.CLASSES.winner).classList.toggle(CONSTS.PARAMS.winner);
-        }
-
-        document.querySelector('.player-0-panel').classList.add(CONSTS.PARAMS.active);
-        idPlayerRolling = getIdActivePanel(getPlayerActive());
-        acumulatedRollingScore = 0;
-        document.querySelector(CONSTS.CLASSES.dice).style.display = CONSTS.STYLES.none;
-        document.querySelector(CONSTS.CLASSES.btnRoll).style.display = CONSTS.STYLES.block;
-        document.querySelector(CONSTS.CLASSES.btnHold).style.display = CONSTS.STYLES.block;
-
-        for (let i = 0; i < document.querySelectorAll(CONSTS.CLASSES.playerName).length; i++) {
-            document.querySelectorAll(CONSTS.CLASSES.playerCurrentScore)[i].textContent = 0;
-            document.querySelectorAll(CONSTS.CLASSES.playerScore)[i].textContent = 0;
-        }
-    }
-
-    function rollDie() {
-        document.querySelector(CONSTS.CLASSES.dice).style.display = CONSTS.STYLES.block;
-
-        return Math.floor((Math.random() * 6) + 1);
-    }
-
-    function validateWinner(id) {
-        return parseInt(document.querySelector(`#score-${id}`).textContent) + parseInt(document.querySelector(`#current-${id}`).textContent);
-    }
-
-    function warpUp (id) {
-        document.querySelector(`.player-${id}-panel`).classList.toggle(CONSTS.PARAMS.winner);
-        document.querySelector(`.player-${id}-panel`).classList.toggle(CONSTS.PARAMS.active);
-        document.querySelector(CONSTS.CLASSES.btnRoll).style.display = CONSTS.STYLES.none;
-        document.querySelector(CONSTS.CLASSES.btnHold).style.display = CONSTS.STYLES.none;
-        document.querySelector(`#name-${id}`).textContent = CONSTS.PARAMS.winner;
-    }
-
-    //DOM events
-    document.querySelector(CONSTS.CLASSES.btnNew).addEventListener(CONSTS.EVENTS.click, function () {
-        newGame();
-    });
-
-    document.querySelector(CONSTS.CLASSES.btnRoll).addEventListener(CONSTS.EVENTS.click, function() {
-        let diceValue;
-
-        diceValue = rollDie();
-        document.querySelector(CONSTS.CLASSES.dice).src = `dice-${diceValue}.png`;
-
-        if (diceValue !== 1) {
-            acumulateScore(diceValue, idPlayerRolling);
-
-            if (validateWinner(idPlayerRolling) >= 10) {
-                warpUp(idPlayerRolling);
-            }
+        if (totalAcumulated[idCurrentPlayer] < CONSTANTS.PARAMS.TARGET_SCORE) {
+            setNextPlayer();
         } else {
-            changePlayer(idPlayerRolling);
+            let byNameClass;
+    
+            byNameClass = document.querySelector(`.player-${idCurrentPlayer}-panel`);
+            byNameClass.classList.toggle(CONSTANTS.PARAMS.ACTIVE);
+            byNameClass.classList.toggle(CONSTANTS.PARAMS.WINNER);
+            document.querySelector(`#name-${idCurrentPlayer}`).textContent = CONSTANTS.PARAMS.WINNER;
+            document.querySelector(`#current-${idCurrentPlayer}`).textContent = 0;
         }
-    });
+    }
 
-    document.querySelector(CONSTS.CLASSES.btnHold).addEventListener(CONSTS.EVENTS.click, function() {
-        totalAcumulated = parseInt(document.querySelector(`#score-${idPlayerRolling}`).textContent);
-        totalAcumulated += acumulatedRollingScore;
-        document.querySelector(`#score-${idPlayerRolling}`).textContent = totalAcumulated;
+    function init() {
+        const tempId = idCurrentPlayer;
 
-        changePlayer(idPlayerRolling);
-    });
+        currentAcumulated = 0;
+        idCurrentPlayer = 0;
+        totalAcumulated = [0,0];
 
-    newGame();
+        hideDie();
+
+        for (let i = 0; i < totalAcumulated.length; i++) {
+            document.querySelectorAll(CONSTANTS.CLASSES.PLAYER_CURRENT_SCORE)[i].textContent = currentAcumulated;
+            document.querySelectorAll(CONSTANTS.CLASSES.PLAYER_SCORE)[i].textContent = totalAcumulated[i];
+        }
+
+        if (document.querySelector(CONSTANTS.CLASSES.WINNER)) {
+            document.querySelector(`#name-${tempId}`).textContent = `player ${tempId + 1}`;
+            document.querySelector(`#player-${tempId}-panel`).classList.remove(CONSTANTS.PARAMS.WINNER);
+            document.querySelector(CONSTANTS.CLASSES.PLAYER_CERO_PANEL).classList.toggle(CONSTANTS.PARAMS.ACTIVE);
+        }
+    }
+
+    function roll() {
+        let dieValue;
+
+        dieValue = getDieValue();
+
+        die.src = `dice-${dieValue}.png`;
+        die.style.display = CONSTANTS.STYLES.BLOCK;
+
+        if (dieValue !== CONSTANTS.PARAMS.SIDE_ONE) {
+            currentAcumulated += dieValue;
+
+            document.querySelector(`#current-${idCurrentPlayer}`).textContent = currentAcumulated;
+        } else {
+            setNextPlayer();
+        }
+    }
+
+    function getDieValue() {
+        return Math.floor(Math.random() * 6) + 1;
+    }
+
+    function setNextPlayer() {
+        const tempId = idCurrentPlayer;
+
+        let tempPlayer;
+
+        currentAcumulated = 0;
+        idCurrentPlayer = idCurrentPlayer === 0 ? 1 : 0;
+
+        hideDie();
+
+        tempPlayer = document.querySelector(`#current-${tempId}`)
+        tempPlayer.textContent = 0;
+        document.querySelector(`.player-${tempId}-panel`).classList.toggle(CONSTANTS.PARAMS.ACTIVE);
+        document.querySelector(`.player-${idCurrentPlayer}-panel`).classList.toggle(CONSTANTS.PARAMS.ACTIVE);
+    }
+
+    document.querySelector(CONSTANTS.CLASSES.BTN_HOLD).addEventListener(CONSTANTS.EVENTS.CLICK, hold);
+    document.querySelector(CONSTANTS.CLASSES.BTN_NEW).addEventListener(CONSTANTS.EVENTS.CLICK, init);
+    document.querySelector(CONSTANTS.CLASSES.BTN_ROLL).addEventListener(CONSTANTS.EVENTS.CLICK, roll);
+
+    init();
